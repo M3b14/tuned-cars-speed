@@ -14,7 +14,7 @@ const camera = new THREE.PerspectiveCamera(
   5000
 );
 
-camera.position.set(0, 8, -15);
+camera.position.set(0, 10, 20);
 
 // ================= RENDER =================
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -23,11 +23,7 @@ document.body.appendChild(renderer.domElement);
 
 // ================= CONTROLS =================
 const controls = new OrbitControls(camera, renderer.domElement);
-
-controls.enableZoom = true;
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.maxPolarAngle = Math.PI / 2.2;
+controls.enabled = false;
 
 // ================= LUZ =================
 const ambient = new THREE.AmbientLight(0xffffff, 2);
@@ -62,12 +58,12 @@ window.addEventListener("keyup", (e) => {
 
 // ================= MAPA =================
 loader.load(
-  "./assets/chicken_gun_fruzer_megapolis.glb",
+  "./assets/race_track_23mb_glb",
   (gltf) => {
     city = gltf.scene;
 
-    city.scale.set(3, 3, 3);
-    city.position.set(0, 485, 0);
+    city.scale.set(20, 20, 20);
+    city.position.set(0, -5, 0);
 
     scene.add(city);
 
@@ -85,8 +81,8 @@ loader.load(
   (gltf) => {
     car = gltf.scene;
 
-    car.scale.set(200, 200, 200);
-    car.position.set(15, 490, 25);
+    car.scale.set(2000, 2000, 2000);
+    car.position.set(0, 2, 0);
     car.rotation.y = Math.PI;
 
     scene.add(car);
@@ -99,80 +95,75 @@ loader.load(
   }
 );
 
-// ================= UPDATE CAR =================
+// ================= UPDATE =================
 function updateCar() {
-  if (!car || !city) return;
+  if (!car) return;
 
-  // movimento
-  if (keys["w"]) speed += 0.08;
-  if (keys["s"]) speed -= 0.03;
+  // acelerar/frear
+  if (keys["w"]) speed += 0.5;
+  if (keys["s"]) speed -= 0.05;
 
-  speed *= 0.97;
+  speed *= 0.98;
 
-  if (keys["a"]) car.rotation.y += 0.04;
-  if (keys["d"]) car.rotation.y -= 0.04;
+  // virar
+  if (keys["a"]) car.rotation.y += 0.03;
+  if (keys["d"]) car.rotation.y -= 0.03;
 
   // nitro
-  if (keys["shift"] && nitro > 0) {
+  if (keys["shift"] && nitro > 2) {
     speed += 0.03;
     nitro -= 1;
   }
 
   nitro = Math.min(100, nitro + 0.2);
 
-  // dinheiro teste
+  // drift = ganhar dinheiro
   if (keys[" "]) {
     money += 1;
   }
 
-  // andar
+  // movimento
   car.position.x += Math.sin(car.rotation.y) * speed;
   car.position.z += Math.cos(car.rotation.y) * speed;
 
-  // grudar na rua
-  raycaster.set(
-    new THREE.Vector3(
-      car.position.x,
-      car.position.y + 100,
-      car.position.z
-    ),
-    new THREE.Vector3(0, -1, 0)
-  );
+  // raycast no chão
+  if (city) {
+    raycaster.set(
+      new THREE.Vector3(
+        car.position.x,
+        car.position.y + 50,
+        car.position.z
+      ),
+      new THREE.Vector3(0, -1, 0)
+    );
 
-  const hits = raycaster.intersectObject(city, true);
+    const hits = raycaster.intersectObject(city, true);
 
-  if (hits.length > 0) {
-    let highest = hits[0];
-
-    for (let i = 1; i < hits.length; i++) {
-      if (hits[i].point.y > highest.point.y) {
-        highest = hits[i];
-      }
+    if (hits.length > 0) {
+      car.position.y = hits[0].point.y + 8;
     }
-
-    car.position.y = highest.point.y + 1;
   }
 
-  // camera segue o carro
-  const camOffset = new THREE.Vector3(
-    Math.sin(car.rotation.y) * -15,
-    8,
-    Math.cos(car.rotation.y) * -15
+  // ================= CAMERA ESTILO CORRIDA =================
+  const distance = 80;
+  const height = 50;
+
+  const camX = car.position.x - Math.sin(car.rotation.y) * distance;
+  const camY = car.position.y + height;
+  const camZ = car.position.z - Math.cos(car.rotation.y) * distance;
+
+  camera.position.lerp(
+    new THREE.Vector3(camX, camY, camZ),
+    0.10
   );
 
-  const targetCam = car.position.clone().add(camOffset);
-
-  camera.position.lerp(targetCam, 0.08);
-
-  const lookTarget = new THREE.Vector3(
+  camera.lookAt(
     car.position.x,
     car.position.y + 2,
     car.position.z
   );
 
-  controls.target.lerp(lookTarget, 0.08);
-
-  // HUD
+  // ================= HUD =================
   document.getElementById("speed").innerText =
     "VEL: " + Math.floor(Math.abs(speed) * 220) + " KM/H";
 
@@ -193,7 +184,6 @@ function animate() {
   timer += 0.016;
 
   updateCar();
-  controls.update();
 
   renderer.render(scene, camera);
 }
