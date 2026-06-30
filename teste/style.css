@@ -1,0 +1,46 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  #gameTitle {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgb(4, 0, 255);
+  font-family: Arial;
+  font-size: 50px;
+  z-index: 100;
+}
+  font-family: Arial, sans-serif;
+}
+
+canvas {
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+#hud div {
+  background: rgba(0,0,0,0.6);
+  color: rgb(253, 253, 255);
+  padding: 18px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  font-size: 16px;
+}
